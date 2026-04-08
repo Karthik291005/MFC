@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momin Fruit Company</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2530;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --accent: #d4f04e;
+    --accent-dark: #a8c23a;
+    --accent-text: #0d1117;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --blue: #58a6ff;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 50;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  /* MAIN */
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* STATS CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.2rem 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.s1::before { background: var(--accent); }
+  .stat-card.s2::before { background: var(--blue); }
+  .stat-card.s3::before { background: var(--green); }
+  .stat-card.s4::before { background: var(--red); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; line-height: 1; }
+
+  /* TOOLBAR */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.2rem;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search-wrap input { width: 100%; padding: 9px 12px 9px 36px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: inherit; font-size: 13px; }
+  .search-wrap input:focus { outline: none; border-color: var(--border2); }
+  .search-wrap input::placeholder { color: var(--muted); }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius);
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border2);
+    background: var(--surface); color: var(--text);
+    transition: all 0.15s ease; white-space: nowrap;
+  }
+  .btn:hover { background: var(--surface2); border-color: rgba(255,255,255,0.2); }
+  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  .btn.primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn.sm { padding: 5px 10px; font-size: 12px; }
+  .btn.danger { color: var(--red); border-color: rgba(248,81,73,0.3); background: rgba(248,81,73,0.07); }
+  .btn.danger:hover { background: rgba(248,81,73,0.15); }
+
+  /* TABLE CONTAINER */
+  .table-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 950px; }
+  thead { background: var(--surface2); }
+  th {
+    padding: 0 14px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    white-space: nowrap;
+    vertical-align: top;
+    padding-bottom: 0;
+  }
+  th .th-label {
+    display: flex; align-items: center; gap: 4px;
+    padding: 14px 0 6px;
+    cursor: pointer; user-select: none;
+  }
+  th .th-label:hover { color: var(--text); }
+  .sort-icon { font-size: 10px; opacity: 0.5; }
+  .sort-icon.active { opacity: 1; color: var(--accent); }
+  th .filter-input {
+    display: block;
+    width: 100%;
+    padding: 5px 8px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  th .filter-input:focus { outline: none; border-color: var(--border2); }
+  th .filter-input::placeholder { color: var(--muted); opacity: 0.7; }
+
+  td {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+    font-size: 13px;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .amount { font-family: 'Syne', sans-serif; font-weight: 500; font-size: 13px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  }
+  .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+  .badge.paid { background: rgba(63,185,80,0.12); color: var(--green); }
+  .badge.paid::before { background: var(--green); }
+  .badge.partial { background: rgba(210,153,34,0.12); color: var(--yellow); }
+  .badge.partial::before { background: var(--yellow); }
+  .badge.unpaid { background: rgba(248,81,73,0.12); color: var(--red); }
+  .badge.unpaid::before { background: var(--red); }
+
+  .empty-state { padding: 3rem; text-align: center; color: var(--muted); }
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+  .empty-state p { font-size: 14px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 200;
+    align-items: center; justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 1.8rem;
+    width: 100%; max-width: 480px;
+    max-height: 90vh; overflow-y: auto;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.4rem; }
+  .modal-header h3 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+  .close-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1; }
+  .close-btn:hover { color: var(--text); }
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+  .form-row input {
+    width: 100%; padding: 9px 12px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text);
+    font-family: inherit; font-size: 14px;
+  }
+  .form-row input:focus { outline: none; border-color: var(--accent); }
+  .form-row input[readonly] { opacity: 0.6; cursor: default; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 10px 16px;
+    font-size: 13px; z-index: 300;
+    transform: translateY(60px); opacity: 0;
+    transition: all 0.3s ease;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 600px) {
+    main { padding: 1rem; }
+    header { padding: 0 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🍊 Momin<span class="logo-dot">Fruit Company</span></div>
+  <div class="header-right">
+    <button class="btn" onclick="exportExcel()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export Excel
+    </button>
+    <button class="btn primary" onclick="openModal()">+ Add Record</button>
+  </div>
+</header>
+
+<main>
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="globalSearch" placeholder="Search by customer name..." oninput="renderTable()">
+    </div>
+  </div>
+
+  <div class="table-container">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <div class="th-label" onclick="sortBy('date')">Date <span class="sort-icon" id="sort-date">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-date" oninput="renderTable()">
+            </th>
+            <th>
+              <div class="th-label" onclick="sortBy('name')">Customer <span class="sort-icon" id="sort-name">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-name" oninput="renderTable()">
+            </th>
+            <th>
+              <div class="th-label" onclick="sortBy('item')">Item <span class="sort-icon" id="sort-item">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-item" oninput="renderTable()">
+            </th>
+            <th>
+              <div class="th-label" onclick="sortBy('qty')">Qty <span class="sort-icon" id="sort-qty">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-qty" oninput="renderTable()">
+            </th>
+            <th>
+              <div class="th-label" onclick="sortBy('cost')">Cost/Tray <span class="sort-icon" id="sort-cost">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-cost" oninput="renderTable()">
+            </th>
+            <th>
+              <div class="th-label" onclick="sortBy('total')">Total <span class="sort-icon" id="sort-total">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-total" oninput="renderTable()">
+            </th>
+            <th>
+              <div class="th-label" onclick="sortBy('paid')">Paid <span class="sort-icon" id="sort-paid">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-paid" oninput="renderTable()">
+            </th>
+            <th>
+              <div class="th-label" onclick="sortBy('remaining')">Remaining <span class="sort-icon" id="sort-remaining">↕</span></div>
+              <input class="filter-input" placeholder="filter..." id="f-remaining" oninput="renderTable()">
+            </th>
+            <th><div class="th-label">Status</div><input class="filter-input" placeholder="filter..." id="f-status" oninput="renderTable()"></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Purchase Record</h3>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-row"><label>Date</label><input type="date" id="f_date"></div>
+    <div class="form-row"><label>Customer Name</label><input type="text" id="f_name" placeholder="e.g. Ravi Kumar"></div>
+    <div class="form-row"><label>Item Purchased</label><input type="text" id="f_item" placeholder="e.g. Mango, Apple..."></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Quantity (Trays)</label><input type="number" id="f_qty" min="1" placeholder="0" oninput="autoCalc()"></div>
+      <div class="form-row"><label>Cost per Tray (₹)</label><input type="number" id="f_cost" min="0" placeholder="0" oninput="autoCalc()"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Total Cost (₹)</label><input type="number" id="f_total" readonly placeholder="auto-calculated"></div>
+      <div class="form-row"><label>Amount Paid (₹)</label><input type="number" id="f_paid" min="0" placeholder="0" oninput="autoCalc()"></div>
+    </div>
+    <div class="form-row"><label>Remaining (₹)</label><input type="number" id="f_remaining" readonly placeholder="auto-calculated"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveRecord()">Save Record</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'freshtray_v2';
+let records = [];
+let sortCol = 'date';
+let sortDir = -1;
+let editId = null;
+
+function load() {
+  try { records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { records = []; }
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch(e) {}
+}
+
+function fmt(n) {
+  return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function statusText(r) {
+  if (r.remaining <= 0) return 'paid';
+  if (r.paid > 0) return 'partial';
+  return 'unpaid';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function openModal(id) {
+  editId = id || null;
+  if (id) {
+    const r = records.find(x => x.id === id);
+    document.getElementById('modalTitle').textContent = 'Edit Record';
+    document.getElementById('f_date').value = r.date || today();
+    document.getElementById('f_name').value = r.name;
+    document.getElementById('f_item').value = r.item;
+    document.getElementById('f_qty').value = r.qty;
+    document.getElementById('f_cost').value = r.cost;
+    document.getElementById('f_total').value = r.total;
+    document.getElementById('f_paid').value = r.paid;
+    document.getElementById('f_remaining').value = r.remaining;
+  } else {
+    document.getElementById('modalTitle').textContent = 'Add Purchase Record';
+    document.getElementById('f_date').value = today();
+    ['f_name','f_item','f_qty','f_cost','f_total','f_paid','f_remaining'].forEach(i => document.getElementById(i).value = '');
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('f_name').focus(), 100);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function autoCalc() {
+  const qty = parseFloat(document.getElementById('f_qty').value) || 0;
+  const cost = parseFloat(document.getElementById('f_cost').value) || 0;
+  const paid = parseFloat(document.getElementById('f_paid').value) || 0;
+  const total = qty * cost;
+  document.getElementById('f_total').value = total ? total.toFixed(2) : '';
+  document.getElementById('f_remaining').value = total ? Math.max(0, total - paid).toFixed(2) : '';
+}
+
+function saveRecord() {
+  const name = document.getElementById('f_name').value.trim();
+  const item = document.getElementById('f_item').value.trim();
+  const qty = parseFloat(document.getElementById('f_qty').value);
+  const cost = parseFloat(document.getElementById('f_cost').value);
+  const paid = parseFloat(document.getElementById('f_paid').value) || 0;
+  const date = document.getElementById('f_date').value;
+  if (!name || !item || !qty || !cost) { showToast('Please fill all required fields'); return; }
+  const total = qty * cost;
+  const remaining = Math.max(0, total - paid);
+  if (editId) {
+    const r = records.find(x => x.id === editId);
+    Object.assign(r, { date, name, item, qty, cost, total, paid, remaining });
+    showToast('Record updated');
+  } else {
+    records.push({ id: Date.now().toString(), date, name, item, qty, cost, total, paid, remaining });
+    showToast('Record added');
+  }
+  save(); closeModal(); renderTable();
+}
+
+function deleteRecord(id) {
+  if (!confirm('Delete this record?')) return;
+  records = records.filter(r => r.id !== id);
+  save(); renderTable(); showToast('Record deleted');
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('.sort-icon').forEach(el => { el.textContent = '↕'; el.classList.remove('active'); });
+  const icon = document.getElementById('sort-' + col);
+  if (icon) { icon.textContent = sortDir === 1 ? '↑' : '↓'; icon.classList.add('active'); }
+  renderTable();
+}
+
+function renderTable() {
+  const gs = document.getElementById('globalSearch').value.toLowerCase();
+  const filters = {
+    date: document.getElementById('f-date').value.toLowerCase(),
+    name: document.getElementById('f-name').value.toLowerCase(),
+    item: document.getElementById('f-item').value.toLowerCase(),
+    qty: document.getElementById('f-qty').value.toLowerCase(),
+    cost: document.getElementById('f-cost').value.toLowerCase(),
+    total: document.getElementById('f-total').value.toLowerCase(),
+    paid: document.getElementById('f-paid').value.toLowerCase(),
+    remaining: document.getElementById('f-remaining').value.toLowerCase(),
+    status: document.getElementById('f-status').value.toLowerCase(),
+  };
+
+  let data = records.filter(r => {
+    if (gs && !r.name.toLowerCase().includes(gs)) return false;
+    if (filters.date && !fmtDate(r.date).includes(filters.date) && !(r.date||'').includes(filters.date)) return false;
+    if (filters.name && !r.name.toLowerCase().includes(filters.name)) return false;
+    if (filters.item && !r.item.toLowerCase().includes(filters.item)) return false;
+    if (filters.qty && !String(r.qty).includes(filters.qty)) return false;
+    if (filters.cost && !String(r.cost).includes(filters.cost)) return false;
+    if (filters.total && !String(r.total).includes(filters.total)) return false;
+    if (filters.paid && !String(r.paid).includes(filters.paid)) return false;
+    if (filters.remaining && !String(r.remaining).includes(filters.remaining)) return false;
+    if (filters.status && !statusText(r).includes(filters.status)) return false;
+    return true;
+  });
+
+  data.sort((a, b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (sortCol === 'date') { av = av || ''; bv = bv || ''; }
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="icon">🍋</div><p>${records.length ? 'No records match your filters' : 'No records yet. Add your first customer purchase!'}</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = data.map(r => {
+      const st = statusText(r);
+      return `<tr>
+        <td>${fmtDate(r.date)}</td>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.item}</td>
+        <td>${r.qty}</td>
+        <td class="amount">${fmt(r.cost)}</td>
+        <td class="amount">${fmt(r.total)}</td>
+        <td class="amount">${fmt(r.paid)}</td>
+        <td class="amount" style="${r.remaining > 0 ? 'color:var(--red)' : ''}">${fmt(r.remaining)}</td>
+        <td><span class="badge ${st}">${st.charAt(0).toUpperCase()+st.slice(1)}</span></td>
+        <td style="white-space:nowrap;display:flex;gap:6px;">
+          <button class="btn sm" onclick="openModal('${r.id}')">Edit</button>
+          <button class="btn sm danger" onclick="deleteRecord('${r.id}')">Delete</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  renderStats(data);
+}
+
+function renderStats(data) {
+  const totalBill = data.reduce((s,r)=>s+r.total,0);
+  const totalPaid = data.reduce((s,r)=>s+r.paid,0);
+  const totalDue = data.reduce((s,r)=>s+r.remaining,0);
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card s1"><div class="stat-label">Total Records</div><div class="stat-value">${data.length}</div></div>
+    <div class="stat-card s2"><div class="stat-label">Total Billed</div><div class="stat-value" style="font-size:18px">${fmt(totalBill)}</div></div>
+    <div class="stat-card s3"><div class="stat-label">Total Collected</div><div class="stat-value" style="font-size:18px;color:var(--green)">${fmt(totalPaid)}</div></div>
+    <div class="stat-card s4"><div class="stat-label">Outstanding</div><div class="stat-value" style="font-size:18px;color:var(--red)">${fmt(totalDue)}</div></div>
+  `;
+}
+
+function exportExcel() {
+  if (!records.length) { showToast('No records to export'); return; }
+  const rows = records.map(r => ({
+    'Date': fmtDate(r.date),
+    'Customer Name': r.name,
+    'Item': r.item,
+    'Quantity (Trays)': r.qty,
+    'Cost per Tray (₹)': r.cost,
+    'Total Cost (₹)': r.total,
+    'Amount Paid (₹)': r.paid,
+    'Remaining (₹)': r.remaining,
+    'Status': statusText(r).charAt(0).toUpperCase() + statusText(r).slice(1)
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Customer Records');
+  const cols = [12,20,14,10,12,12,12,12,10];
+  ws['!cols'] = cols.map(w => ({ wch: w }));
+  XLSX.writeFile(wb, 'FreshTray_Customer_Records.xlsx');
+  showToast('Excel file downloaded!');
+}
+
+load();
+renderTable();
+</script>
+</body>
+</html>
